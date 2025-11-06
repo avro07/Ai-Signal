@@ -24,6 +24,23 @@ const App: React.FC = () => {
   const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
+  // Register Service Worker
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        // Construct an absolute URL to the service worker to avoid origin mismatches in specific environments.
+        const swUrl = `${window.location.origin}/sw.js`;
+        navigator.serviceWorker.register(swUrl)
+          .then(registration => {
+            console.log('Service Worker registered with scope: ', registration.scope);
+          })
+          .catch(err => {
+            console.error('Service Worker registration failed: ', err);
+          });
+      });
+    }
+  }, []);
+
   const handleRequestPermission = useCallback(async () => {
     const permission = await requestNotificationPermission();
     setNotificationPermission(permission);

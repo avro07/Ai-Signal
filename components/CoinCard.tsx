@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Coin, GeminiAnalysis, BinanceTickerPayload, PriceAlerts, TechnicalIndicators } from '../types';
 import { Signal } from '../types';
-import { getTradingSignal } from '../services/geminiService';
 import { showNotification } from '../services/notificationService';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { EditIcon, TrashIcon, SparkIcon, BuyIcon, SellIcon, HoldIcon, ChevronDownIcon, BellIcon, ChartBarIcon, RefreshIcon } from './Icons';
@@ -214,15 +213,29 @@ export const CoinCard: React.FC<CoinCardProps> = ({ symbol, onEdit, onDelete, no
         setAnalysis(null);
         setIsAnalysisVisible(false);
         setExpandedIndicators({});
-        const result = await getTradingSignal(symbol, coinData.price, coinData.high24h, coinData.low24h);
-        if (result) {
-            setAnalysis(result);
-            setIsAnalysisVisible(true);
-            if(notificationsEnabled && (result.signal === Signal.BUY || result.signal === Signal.SELL)) {
-                 showNotification(`${symbol} سیگন্যাল: ${result.signal}`, { body: result.reasoning }, true);
+        try {
+            const { getTradingSignal } = await import('../services/geminiService');
+            const result = await getTradingSignal(symbol, coinData.price, coinData.high24h, coinData.low24h);
+            if (result) {
+                setAnalysis(result);
+                setIsAnalysisVisible(true);
+                if(notificationsEnabled && (result.signal === Signal.BUY || result.signal === Signal.SELL)) {
+                     showNotification(`${symbol} سیگন্যাল: ${result.signal}`, { body: result.reasoning }, true);
+                }
             }
+        } catch (error) {
+            console.error('Error fetching AI analysis:', error);
+            setAnalysis({
+                signal: Signal.NONE,
+                entry_point: 0,
+                exit_point: 0,
+                reasoning: 'AI analysis could not be loaded. Please try again later.',
+                confidence_score: 0,
+            });
+            setIsAnalysisVisible(true);
+        } finally {
+            setIsLoadingAnalysis(false);
         }
-        setIsLoadingAnalysis(false);
     };
     
     const toggleIndicator = (name: string) => {
