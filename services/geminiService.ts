@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { GeminiAnalysis } from '../types';
 import { Signal } from '../types';
@@ -6,18 +7,37 @@ import { Signal } from '../types';
 // IMPORTANT: This assumes process.env.API_KEY is set in the environment.
 // In a real application, this key should be handled securely and not exposed on the client-side.
 // This service should ideally be a backend route that the frontend calls.
+
 let ai: GoogleGenAI | null = null;
-try {
-  ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-} catch (error)
-{
-  console.error("Failed to initialize GoogleGenAI. Is API_KEY set?", error);
-  // Handle the error appropriately, e.g., by disabling AI features
-}
+
+// Lazily initialize the AI client to prevent "process is not defined" error on module load
+// in browser environments.
+const getAiClient = (): GoogleGenAI | null => {
+    if (ai) {
+        return ai;
+    }
+    try {
+        // The execution environment is expected to provide process.env.API_KEY.
+        // If 'process' is not defined, we cannot initialize the client.
+        const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
+
+        if (apiKey) {
+            ai = new GoogleGenAI({ apiKey: apiKey as string });
+            return ai;
+        } else {
+            console.error("GoogleGenAI could not be initialized. API_KEY is missing from the environment.");
+            return null;
+        }
+    } catch (error) {
+        console.error("Failed to initialize GoogleGenAI. Is API_KEY set correctly?", error);
+        return null;
+    }
+};
 
 
 export const getTradingSignal = async (symbol: string, price: number, high24h: number, low24h: number): Promise<GeminiAnalysis | null> => {
-    if (!ai) {
+    const localAi = getAiClient();
+    if (!localAi) {
         console.error("Gemini AI not initialized. Cannot fetch trading signal.");
         return Promise.resolve({
             signal: Signal.NONE,
@@ -49,7 +69,7 @@ export const getTradingSignal = async (symbol: string, price: number, high24h: n
     `;
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await localAi.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
