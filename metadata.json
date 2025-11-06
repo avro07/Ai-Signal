@@ -1,0 +1,5 @@
+{
+  "name": "Live Coin Signal",
+  "description": "A simple, responsive web app for live cryptocurrency signals. It features live price tracking, technical analysis alerts from Gemini, and local data persistence.",
+  "requestFramePermissions": []
+}
