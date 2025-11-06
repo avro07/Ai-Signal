@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import type { GoogleGenAI } from "@google/genai";
 import type { GeminiAnalysis } from '../types';
 import { Signal } from '../types';
 
@@ -10,18 +10,20 @@ import { Signal } from '../types';
 
 let ai: GoogleGenAI | null = null;
 
-// Lazily initialize the AI client to prevent "process is not defined" error on module load
-// in browser environments.
-const getAiClient = (): GoogleGenAI | null => {
+// Lazily initialize the AI client using dynamic import to prevent "process is not defined" error
+// on module load in browser environments.
+const getAiClient = async (): Promise<GoogleGenAI | null> => {
     if (ai) {
         return ai;
     }
     try {
         // The execution environment is expected to provide process.env.API_KEY.
-        // If 'process' is not defined, we cannot initialize the client.
+        // This check is a safeguard.
         const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
 
         if (apiKey) {
+            // Dynamically import the module only when the API key is available and the function is called.
+            const { GoogleGenAI } = await import('@google/genai');
             ai = new GoogleGenAI({ apiKey: apiKey as string });
             return ai;
         } else {
@@ -36,7 +38,7 @@ const getAiClient = (): GoogleGenAI | null => {
 
 
 export const getTradingSignal = async (symbol: string, price: number, high24h: number, low24h: number): Promise<GeminiAnalysis | null> => {
-    const localAi = getAiClient();
+    const localAi = await getAiClient();
     if (!localAi) {
         console.error("Gemini AI not initialized. Cannot fetch trading signal.");
         return Promise.resolve({
@@ -47,6 +49,9 @@ export const getTradingSignal = async (symbol: string, price: number, high24h: n
             confidence_score: 0
         });
     }
+    
+    // Dynamically import `Type` enum when needed for the schema.
+    const { Type } = await import('@google/genai');
 
     const prompt = `
         Analyze the cryptocurrency ${symbol} for a short-term trade.

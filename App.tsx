@@ -46,30 +46,6 @@ const App: React.FC = () => {
     };
   }, []);
   
-  // Register Service Worker
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-        const registerServiceWorker = () => {
-            // Construct an absolute URL to the service worker to avoid origin issues.
-            const swUrl = `${window.location.origin}/sw.js`;
-            navigator.serviceWorker.register(swUrl)
-                .then(registration => console.log('Service Worker registered:', registration))
-                .catch(err => console.error('Service Worker registration failed:', err));
-        };
-
-        // If the page is already loaded, register the service worker immediately.
-        // Otherwise, wait for the 'load' event. This prevents a race condition
-        // where the 'load' event fires before this useEffect hook runs.
-        if (document.readyState === 'complete') {
-            registerServiceWorker();
-        } else {
-            window.addEventListener('load', registerServiceWorker);
-            // Cleanup the event listener if the component unmounts before the load event.
-            return () => window.removeEventListener('load', registerServiceWorker);
-        }
-    }
-  }, []);
-
   const handleInstallClick = async () => {
     if (!installPrompt) return;
     await installPrompt.prompt();
