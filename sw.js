@@ -1,7 +1,8 @@
+
 const CACHE_NAME = 'live-coin-signal-cache-v1';
 const urlsToCache = [
-  '/',
-  '/index.html'
+  './',
+  './index.html'
 ];
 
 self.addEventListener('install', event => {
@@ -23,10 +24,10 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request).then(response => {
         // If the response is valid, return it. If it's an error (like 404), fall back to the cached app shell.
-        return response.ok ? response : caches.match('/');
+        return response.ok ? response : caches.match('./index.html');
       }).catch(() => {
         // If the network request fails entirely (e.g., offline), fall back to the cached app shell.
-        return caches.match('/');
+        return caches.match('./index.html');
       })
     );
   } else {

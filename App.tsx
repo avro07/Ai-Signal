@@ -28,9 +28,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Construct an absolute URL to the service worker to avoid origin mismatches in specific environments.
-        const swUrl = `${window.location.origin}/sw.js`;
-        navigator.serviceWorker.register(swUrl)
+        // Use relative path for service worker to support subdirectories
+        navigator.serviceWorker.register('./sw.js')
           .then(registration => {
             console.log('Service Worker registered with scope: ', registration.scope);
           })
