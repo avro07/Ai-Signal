@@ -2,7 +2,8 @@
 const CACHE_NAME = 'live-coin-signal-cache-v1';
 const urlsToCache = [
   './',
-  './index.html'
+  './index.html',
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {

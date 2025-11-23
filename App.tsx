@@ -28,8 +28,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Use relative path for service worker to support subdirectories
-        navigator.serviceWorker.register('./sw.js')
+        // Use relative path and scope for service worker to support subdirectories
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
           .then(registration => {
             console.log('Service Worker registered with scope: ', registration.scope);
           })
