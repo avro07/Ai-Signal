@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'live-coin-signal-cache-v1';
+const CACHE_NAME = 'live-coin-signal-cache-v2';
 const urlsToCache = [
   './',
   './index.html',
