@@ -28,8 +28,11 @@ const App: React.FC = () => {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Use relative path and scope for service worker to support subdirectories
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
+        // FIX: Construct absolute URL based on window.location to avoid origin mismatch errors
+        // caused by <base> tags in some preview environments or relative path resolution quirks.
+        const swUrl = new URL('./sw.js', window.location.href).href;
+
+        navigator.serviceWorker.register(swUrl, { scope: './' })
           .then(registration => {
             console.log('Service Worker registered with scope: ', registration.scope);
           })
