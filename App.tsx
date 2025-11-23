@@ -27,19 +27,32 @@ const App: React.FC = () => {
   // Register Service Worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        // FIX: Construct absolute URL based on window.location to avoid origin mismatch errors
-        // caused by <base> tags in some preview environments or relative path resolution quirks.
-        const swUrl = new URL('./sw.js', window.location.href).href;
+      const registerSw = () => {
+        try {
+            // FIX: Construct absolute URL manually to safely target the current origin
+            // regardless of <base> tags or specific environment quirks that break new URL().
+            const currentPath = window.location.pathname;
+            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+            const swUrl = `${window.location.origin}${basePath}sw.js`;
 
-        navigator.serviceWorker.register(swUrl, { scope: './' })
-          .then(registration => {
-            console.log('Service Worker registered with scope: ', registration.scope);
-          })
-          .catch(err => {
-            console.error('Service Worker registration failed: ', err);
-          });
-      });
+            navigator.serviceWorker.register(swUrl, { scope: './' })
+            .then(registration => {
+                console.log('Service Worker registered with scope: ', registration.scope);
+            })
+            .catch(err => {
+                console.error('Service Worker registration failed: ', err);
+            });
+        } catch (error) {
+             console.error('Error during SW registration setup:', error);
+        }
+      };
+
+      if (document.readyState === 'complete') {
+        registerSw();
+      } else {
+        window.addEventListener('load', registerSw);
+        return () => window.removeEventListener('load', registerSw);
+      }
     }
   }, []);
 
