@@ -26,7 +26,7 @@
         "react": "https://esm.sh/react@18.2.0?target=system",
         "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?target=system",
         "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime?target=system",
-        "@google/genai": "https://esm.sh/@google/genai?target=system"
+        "@google/genai": "https://esm.sh/@google/genai@0.2.1?target=system"
       }
     }
     </script>
@@ -37,11 +37,13 @@
         const originalFetch = System.constructor.prototype.fetch;
         System.constructor.prototype.fetch = function(url) {
             return originalFetch.apply(this, arguments).then(function(source) {
-                if (url.endsWith('.tsx') || url.endsWith('.ts')) {
+                // Remove query params for extension check (e.g. file.tsx?v=1)
+                const cleanUrl = url.split('?')[0];
+                if (cleanUrl.endsWith('.tsx') || cleanUrl.endsWith('.ts')) {
                     // Transpile to System.register format
                     try {
                         return Babel.transform(source, {
-                            filename: url,
+                            filename: cleanUrl,
                             presets: [
                                 ['react', { runtime: 'automatic' }],
                                 'typescript'
@@ -92,13 +94,18 @@
   <body class="bg-gray-900 text-gray-100">
     <div id="root"></div>
     <script>
-        System.import('./index.tsx').catch(function(err) {
+        // Load the main entry point with a cache buster to ensure fresh load
+        System.import('./index.tsx?v=' + Date.now()).catch(function(err) {
             console.error('SystemJS Load Error:', err);
             document.body.innerHTML += `
                 <div style="color: #ef4444; padding: 20px; text-align: center; margin-top: 50px;">
                     <h2 style="font-size: 1.5rem; font-weight: bold;">Application Error</h2>
                     <p>Failed to load the application.</p>
-                    <pre style="background: #1f2937; padding: 10px; border-radius: 5px; text-align: left; overflow: auto; margin-top: 10px;">${err.message}</pre>
+                    <pre style="background: #1f2937; padding: 10px; border-radius: 5px; text-align: left; overflow: auto; margin-top: 10px; font-size: 0.8rem;">${err.message}</pre>
+                    <button onclick="window.location.reload(true)" style="margin-top: 20px; padding: 8px 16px; background-color: #06b6d4; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Reload Page
+                    </button>
+                    <p style="margin-top: 10px; font-size: 0.8rem; color: #9ca3af;">Check console for details.</p>
                 </div>
             `;
         });

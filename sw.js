@@ -1,5 +1,4 @@
-
-const CACHE_NAME = 'live-coin-signal-cache-v3';
+const CACHE_NAME = 'live-coin-signal-cache-v7';
 const urlsToCache = [
   './',
   './index.html',
@@ -7,12 +6,12 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+  // Force the waiting service worker to become the active service worker.
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        // It's safer to cache only the essential, local files.
-        // Caching cross-origin resources from CDNs can be complex and error-prone.
         return cache.addAll(urlsToCache);
       })
   );
@@ -20,23 +19,19 @@ self.addEventListener('install', event => {
 
 self.addEventListener('fetch', event => {
   // For navigation requests, use a network-first strategy with a cache fallback.
-  // This ensures the app works correctly for deep links (avoiding 404s) and when offline.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).then(response => {
-        // If the response is valid, return it. If it's an error (like 404), fall back to the cached app shell.
         return response.ok ? response : caches.match('./index.html');
       }).catch(() => {
-        // If the network request fails entirely (e.g., offline), fall back to the cached app shell.
         return caches.match('./index.html');
       })
     );
   } else {
-    // For all other requests (JS, CSS, images, etc.), use a cache-first strategy for performance.
+    // For all other requests (JS, CSS, images, etc.), use a cache-first strategy.
     event.respondWith(
       caches.match(event.request)
         .then(response => {
-          // Serve from cache if available, otherwise fetch from the network.
           return response || fetch(event.request);
         })
     );
@@ -55,6 +50,9 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+        // Tell the active service worker to take control of the page immediately.
+        return self.clients.claim();
     })
   );
 });
