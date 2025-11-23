@@ -28,25 +28,16 @@ const App: React.FC = () => {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       const registerSw = async () => {
+        // Service Workers only work on http/https. Skip if on blob: (preview environments) or file:.
+        if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
+            console.log('Service Worker registration skipped due to unsupported protocol:', window.location.protocol);
+            return;
+        }
+
         try {
-            // FIX: Manually construct the absolute URL using protocol and host.
-            // This avoids issues with 'new URL()' and 'window.location.origin' in some 
-            // proxied/preview environments, and ensures the URL strictly matches the document origin.
-            const protocol = window.location.protocol;
-            const host = window.location.host;
-            let path = window.location.pathname;
-
-            // Ensure path ends with / to correctly append sw.js
-            // If path is /index.html, substring removes index.html -> /
-            // If path is /, it stays /
-            if (!path.endsWith('/')) {
-                path = path.substring(0, path.lastIndexOf('/') + 1);
-            }
-
-            const swUrl = `${protocol}//${host}${path}sw.js`;
-            console.log('Registering Service Worker at:', swUrl);
-
-            const registration = await navigator.serviceWorker.register(swUrl, { scope: './' });
+            // Use relative path directly. The browser resolves this correctly against the page origin.
+            // This avoids issues with manual URL construction and origin mismatches.
+            const registration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
             console.log('Service Worker registered with scope: ', registration.scope);
         } catch (error) {
              console.error('Service Worker registration failed:', error);
